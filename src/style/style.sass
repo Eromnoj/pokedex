@@ -17,15 +17,24 @@ body
   grid-template-columns: 1fr 1fr 1fr 1fr
   width: 90%
   margin: auto
+  margin-bottom: 200px
 
 .pokemon
   display: block
+  opacity: 0
   width: 80%
   height: 80%
   margin: 10px
   border: 2px solid black
   border-radius: 5px
   padding: 5px
+  animation: opacity 1.5s
+
+@keyframes opacity
+  0%
+    opacity: 0
+  100%
+    opacity: 1
 
 .name-poke
   display: block 
