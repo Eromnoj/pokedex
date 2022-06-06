@@ -1,21 +1,22 @@
 const pokedex = document.querySelector('.pokedex')
 const prevButton = document.querySelector('.previous')
 const nextButton = document.querySelector('.next')
+const search = document.querySelector('.searchinput')
+const wait = document.querySelector('.wait')
+const body = document.querySelector('body')
+// https://pokeapi.co/api/v2/pokemon/?offset=0&limit=16
+let apiAddress = new URL('https://pokeapi.co/api/v2/pokemon/?offset=0&limit=1200')
 
-let apiAddress = new URL('https://pokeapi.co/api/v2/pokemon/?offset=0&limit=16')
-
-let limit
-let prevAddress
 let nextAddress
-let trigger = window.innerHeight
-console.log(trigger)
-const getPokemon = (name, img, color) => {
+let pokemonList = []
+
+const displayPokemon = (name, img, color) => {
   let divPoke = document.createElement('div')
   divPoke.className = `pokemon ${color}`
   divPoke.id = name
   divPoke.style.backgroundColor = color
   pokedex.appendChild(divPoke)
-  divPoke.style.opacity = 1
+
   let namePoke = document.createElement('p')
   namePoke.className = 'name-poke'
   namePoke.innerText = name
@@ -29,48 +30,80 @@ const getPokemon = (name, img, color) => {
 
 const fetchPokemon = (address) => {
   // pokedex.innerHTML = ""
-  trigger = pokedex.scrollHeight
   fetch(address)
     .then(response => response.json())
     .then(data => {
 
-      console.log(address)
-      setTimeout(() => {
-        Array.from(data.results).forEach(url => {
+      Array.from(data.results).forEach(url => {
 
-          nextAddress = data.next
-          fetch(url.url)
-            .then(response => response.json())
-            .then(data => {
+        nextAddress = data.next
+        fetch(url.url)
+          .then(response => response.json())
+          .then(data => {
 
-              fetch(data.species.url)
-                .then(response => response.json())
-                .then(data2 => {
+            fetch(data.species.url)
+              .then(response => response.json())
+              .then(data2 => {
+                let newPokemon = {
+                  name: data2.names[4].name,
+                  img: data.sprites.other["official-artwork"].front_default,
+                  color: data2.color.name
+                }
+                pokemonList.push(newPokemon)
+              })
+              .catch(err => {
+                console.log(err)
+              })
+          })
+          .catch(err => {
+            console.log(err)
+          })
 
-                  getPokemon(data2.names[4].name, data.sprites.other["official-artwork"].front_default, data2.color.name)
-                })
-                .catch(err => {
-                  console.log(err)
-                })
-            })
-            .catch(err => {
-              console.log(err)
-            })
-
-        })
-      }, 500)
+      })
 
     })
 }
 
 fetchPokemon(apiAddress)
 
-window.addEventListener('scroll', () => {
 
-  limit = window.scrollY
-  console.log(limit)
-  if (limit >= trigger) {
-    fetchPokemon(nextAddress)
-    console.log(limit, trigger)
+let begin = 0
+let end = 20
+
+setTimeout(() => {
+  // wait.style.display = 'none'
+  for (let i = begin; i < end; i++) {
+    displayPokemon(pokemonList[i].name, pokemonList[i].img, pokemonList[i].color)
+  }
+}, 5000)
+
+window.addEventListener('scroll', () => {
+  // console.log(window.scrollY + ' ' + window.innerHeight + '= '+ (window.scrollY + window.innerHeight) + '  '+ pokedex.scrollHeight)
+  if (window.scrollY + window.innerHeight >= pokedex.scrollHeight) {//condition pour infinite scroll : scrollY = état actuel du scroll
+    begin += 20                                                     //                             innerHeight = partie visible du document
+    end += 20                                                       //                            scrollHeight = la hauteur total de l'élément
+
+    for (let i = begin; i < end; i++) {
+      displayPokemon(pokemonList[i].name, pokemonList[i].img, pokemonList[i].color)
+    }
+  }
+})
+
+
+search.addEventListener('keyup', (e) => {
+  pokedex.innerHTML = ''
+  pokemonList.forEach(elem => {
+    if (elem.name.toLowerCase().includes(search.value.toLowerCase())) {
+      displayPokemon(elem.name, elem.img, elem.color)
+    }
+  })
+  if (search.value === '') {
+    pokedex.innerHTML = ''
+    begin = 0
+    end = 20
+    // wait.style.display = 'none'
+    for (let i = begin; i < end; i++) {
+      displayPokemon(pokemonList[i].name, pokemonList[i].img, pokemonList[i].color)
+    }
   }
 })
